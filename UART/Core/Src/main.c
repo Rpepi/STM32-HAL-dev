@@ -54,18 +54,16 @@ SPI_HandleTypeDef hspi5;
 TIM_HandleTypeDef htim1;
 
 UART_HandleTypeDef huart1;
-DMA_HandleTypeDef hdma_usart1_tx;
 
 SDRAM_HandleTypeDef hsdram1;
 
 /* USER CODE BEGIN PV */
-uint8_t data[] = "Hello World!";
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
-static void MX_DMA_Init(void);
 static void MX_CRC_Init(void);
 static void MX_DMA2D_Init(void);
 static void MX_FMC_Init(void);
@@ -114,7 +112,6 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_DMA_Init();
   MX_CRC_Init();
   MX_DMA2D_Init();
   MX_FMC_Init();
@@ -122,8 +119,8 @@ int main(void)
   MX_LTDC_Init();
   MX_SPI5_Init();
   MX_TIM1_Init();
-  MX_USB_HOST_Init();
   MX_USART1_UART_Init();
+  MX_USB_HOST_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
@@ -132,10 +129,6 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  HAL_GPIO_TogglePin(GPIOG, GPIO_PIN_13);
-	  HAL_UART_Transmit(&huart1, data, 12, 1000);
-	  HAL_Delay(1000);
-
     /* USER CODE END WHILE */
     MX_USB_HOST_Process();
 
@@ -479,22 +472,6 @@ static void MX_USART1_UART_Init(void)
 
 }
 
-/**
-  * Enable DMA controller clock
-  */
-static void MX_DMA_Init(void)
-{
-
-  /* DMA controller clock enable */
-  __HAL_RCC_DMA2_CLK_ENABLE();
-
-  /* DMA interrupt init */
-  /* DMA2_Stream7_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA2_Stream7_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMA2_Stream7_IRQn);
-
-}
-
 /* FMC initialization function */
 static void MX_FMC_Init(void)
 {
@@ -568,7 +545,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOC, NCS_MEMS_SPI_Pin|CSX_Pin|OTG_FS_PSO_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5|ACP_RST_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(ACP_RST_GPIO_Port, ACP_RST_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOD, RDX_Pin|WRX_DCX_Pin, GPIO_PIN_RESET);
@@ -589,12 +566,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PA5 ACP_RST_Pin */
-  GPIO_InitStruct.Pin = GPIO_PIN_5|ACP_RST_Pin;
+  /*Configure GPIO pin : ACP_RST_Pin */
+  GPIO_InitStruct.Pin = ACP_RST_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+  HAL_GPIO_Init(ACP_RST_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : OTG_FS_OC_Pin */
   GPIO_InitStruct.Pin = OTG_FS_OC_Pin;
@@ -636,6 +613,28 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 
 /* USER CODE END 4 */
+
+/**
+  * @brief  Period elapsed callback in non blocking mode
+  * @note   This function is called  when TIM6 interrupt took place, inside
+  * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
+  * a global variable "uwTick" used as application time base.
+  * @param  htim : TIM handle
+  * @retval None
+  */
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+  /* USER CODE BEGIN Callback 0 */
+
+  /* USER CODE END Callback 0 */
+  if (htim->Instance == TIM6)
+  {
+    HAL_IncTick();
+  }
+  /* USER CODE BEGIN Callback 1 */
+
+  /* USER CODE END Callback 1 */
+}
 
 /**
   * @brief  This function is executed in case of error occurrence.
